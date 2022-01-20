@@ -228,7 +228,7 @@ public class QueryUtils {
 
                             // Extract the value for the key called "city"
                             String category = currentCollege.getString("category");
-                            
+
                             // Create a new {@link College} object with the city, latitude, longitude
                             // from the JSON response.
                             Datum college = new Datum(name, category);
