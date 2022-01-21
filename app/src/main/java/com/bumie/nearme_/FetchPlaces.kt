@@ -9,9 +9,9 @@ import java.io.IOException
 
 object FetchPlaces {
 
-    suspend fun getPlaces(client: OkHttpClient):List<Datum>{
+    suspend fun getPlaces(client: OkHttpClient):ArrayList<Datum>{
         // Create an empty ArrayList that we can start adding colleges to
-        val places: MutableList<Datum> = ArrayList()
+        val places: ArrayList<Datum> = ArrayList()
         coroutineScope{
             val fetchPlaces = async(Dispatchers.IO + SupervisorJob()) {
                 val request: Request = Request.Builder()
@@ -55,12 +55,24 @@ object FetchPlaces {
                                     // Extract the value for the key called "title"
                                     val name = currentCollege.getString("name")
 
+                                    val type = currentCollege.getString("type")
+
+                                    val subType = currentCollege.getString("subType")
+
+                                    val rank = currentCollege.getInt("rank")
+
+                                    val resTags = currentCollege.getJSONArray("tags")
+                                    val tags = arrayListOf<String>()
+                                    for (x in 0 until resTags.length()){
+                                       tags.add(resTags.getString(x))
+                                    }
+
                                     // Extract the value for the key called "city"
                                     val category = currentCollege.getString("category")
 
                                     // Create a new {@link College} object with the city, latitude, longitude
                                     // from the JSON response.
-                                    val college = Datum(name, category)
+                                    val college = Datum(name, category, type, subType, rank, tags)
 
                                     // Add the new {@link College} to the list of colleges.
                                     places.add(college)
