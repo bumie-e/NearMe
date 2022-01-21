@@ -1,6 +1,7 @@
 package com.bumie.nearme_
 
 
+import android.content.Intent
 import androidx.fragment.app.FragmentActivity
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.GoogleMap
@@ -81,24 +82,33 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
     }
 
 
-    private fun updateMap(places:List<Datum>){
+    private fun updateMap(places:ArrayList<Datum>){
         Log.d("debugger", places.size.toString())
-        for (i in places.indices) {
-            val currentCollege = places[i]
-
-            //Fetch information of college
-            val latitude = currentCollege.geoCode.latitude
-            val longitude = currentCollege.geoCode.longitude
-            val title = currentCollege.name
-            val city = currentCollege.category
-
-            //Place Marker on College
-            val coordinate = LatLng(latitude, longitude)
-            mMap.addMarker(
-                MarkerOptions().position(coordinate).title(city).snippet(title)
-            ).tag =
-                currentCollege
+        Intent(this, PlacesActivity::class.java).apply {
+            putExtra("places", places)
+            startActivity(this)
         }
+
+        /**
+         *Error here
+         */
+
+        /* for (i in places.indices) {
+             val currentCollege = places[i]
+
+             //Fetch information of college
+            // val latitude = currentCollege.geoCode.latitude
+             val longitude = currentCollege.geoCode.longitude
+             val title = currentCollege.name
+             val city = currentCollege.category
+
+             //Place Marker on College
+             val coordinate = LatLng(latitude, longitude)
+             mMap.addMarker(
+                 MarkerOptions().position(coordinate).title(city).snippet(title)
+             ).tag =
+                 currentCollege
+         }*/
     }
 
 
