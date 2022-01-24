@@ -8,7 +8,7 @@ data class Datum(
     var category:String,
     var type:String,
     var subType:String,
-   // var geoCode: GeoCode,
+  //  var geoCode: GeoCode,
     var rank:Int,
     var tags:List<String>): Parcelable {
     constructor(parcel: Parcel) : this(
@@ -16,6 +16,7 @@ data class Datum(
         parcel.readString()!!,
         parcel.readString()!!,
         parcel.readString()!!,
+       // parcel.readString()!!,
         parcel.readInt(),
         parcel.createStringArrayList()!!
     )

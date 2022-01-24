@@ -1,31 +1,19 @@
-package com.bumie.nearme_;
+package com.bumie.nearme_
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
+import com.google.gson.annotations.SerializedName
+import com.google.gson.annotations.Expose
 
-public class GeoCode {
-
+class GeoCode {
     @SerializedName("latitude")
     @Expose
-    private Double latitude;
+    var latitude: Double? = null
+
     @SerializedName("longitude")
     @Expose
-    private Double longitude;
+    var longitude: Double? = null
 
-    public Double getLatitude() {
-        return latitude;
+    constructor(latitude: Double?, longitude: Double?) {
+        this.latitude = latitude
+        this.longitude = longitude
     }
-
-    public void setLatitude(Double latitude) {
-        this.latitude = latitude;
-    }
-
-    public Double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(Double longitude) {
-        this.longitude = longitude;
-    }
-
 }
