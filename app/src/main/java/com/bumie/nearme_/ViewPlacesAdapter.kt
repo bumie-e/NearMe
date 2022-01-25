@@ -7,8 +7,12 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import java.util.ArrayList
+import com.google.android.gms.common.data.DataHolder
 
-class ViewPlacesAdapter(private val context:Context, val places:ArrayList<Datum>):
+
+
+
+class ViewPlacesAdapter(private val context:Context, var places:ArrayList<Places>):
     RecyclerView.Adapter<ViewPlacesViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewPlacesViewHolder {
@@ -25,9 +29,14 @@ class ViewPlacesAdapter(private val context:Context, val places:ArrayList<Datum>
     override fun getItemCount(): Int {
        return places.size
     }
-
+    fun updateList(list: ArrayList<Places>) {
+        places = list
+        notifyDataSetChanged()
+    }
 
 }
+
+
 
 
 class ViewPlacesViewHolder(layout:View): RecyclerView.ViewHolder(layout) {

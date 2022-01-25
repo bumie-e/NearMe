@@ -6,20 +6,25 @@ import okhttp3.*
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
+import kotlin.math.log
+
 
 object FetchPlaces {
 
-    suspend fun getToken(){
+    suspend fun getToken(client: OkHttpClient):String{
+        var token = ""
+        val formBody: RequestBody = FormBody.Builder()
+            .add("grant_type", "client_credentials")
+            .add("&client_id", "your_API_Key")
+            .add("&client_secret", "your_API_Secret")
+            .build()
 
-    }
-    suspend fun getPlaces(client: OkHttpClient):ArrayList<Datum>{
-        // Create an empty ArrayList that we can start adding colleges to
-        val places: ArrayList<Datum> = ArrayList()
-        coroutineScope{
-            val fetchPlaces = async(Dispatchers.IO + SupervisorJob()) {
+        coroutineScope {
+            val fetchToken = async(Dispatchers.IO + SupervisorJob()) {
                 val request: Request = Request.Builder()
-                    .header("Authorization", "Bearer pPvva4KL3w0uw4WSV9AkUcgkTXBQ")
-                    .url("https://test.api.amadeus.com/v1/reference-data/locations/pois?&latitude=41.397158&longitude=2.160873&radius=2")
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .url("https://test.api.amadeus.com/v1/security/oauth2/token")
+                    .post(formBody)
                     .method("GET", null)
                     .build()
                 client.newCall(request).enqueue(object : Callback {
@@ -33,82 +38,36 @@ object FetchPlaces {
                             throw IOException("Unexpected code $response")
                         } else {
                             val text = response.body!!.string()
-                            Log.i("Main Activity: ", text)
-                            //List<Datum> places = new ArrayList<>();
-                            // If the JSON string is empty or null, then return early.
-
-                            // Try to parse the JSON response string. If there's a problem with the way the JSON
-                            // is formatted, a JSONException exception object will be thrown.
-                            // Catch the exception so the app doesn't crash, and print the error message to the logs.
                             try {
+                                token = JSONObject(text).getString("access_token")
 
-                                // Create a JSONObject from the JSON response string
-                                val baseJsonResponse = JSONObject(text)
-
-                                // Extract the JSONArray associated with the key called "features",
-                                // which represents a list of features (or colleges).
-                                val collegeArray = baseJsonResponse.getJSONArray("data")
-
-                                // For each college in the collegeArray, create an {@link College} object
-                                for (i in 0 until collegeArray.length()) {
-
-                                    // Get a single earthquake at position i within the list of college
-                                    val currentCollege = collegeArray.getJSONObject(i)
-
-                                    // Extract the value for the key called "title"
-                                    val name = currentCollege.getString("name")
-
-                                    val type = currentCollege.getString("type")
-
-                                    val subType = currentCollege.getString("subType")
-
-                                    val rank = currentCollege.getInt("rank")
-
-                                    val resTags = currentCollege.getJSONArray("tags")
-                                    val tags = arrayListOf<String>()
-                                    for (x in 0 until resTags.length()){
-                                       tags.add(resTags.getString(x))
-                                    }
-
-                                    // Extract the value for the key called "city"
-                                    val category = currentCollege.getString("category")
-
-                                    // Create a new {@link College} object with the city, latitude, longitude
-                                    // from the JSON response.
-                                    val college = Datum(name, category, type, subType, rank, tags)
-
-                                    // Add the new {@link College} to the list of colleges.
-                                    places.add(college)
-                                }
                             } catch (e: JSONException) {
-                                // If an error is thrown when executing any of the above statements in the "try" block,
-                                // catch the exception here, so the app doesn't crash. Print a log message
-                                // with the message from the exception.
-                                Log.e("QueryUtils", "Problem parsing the college JSON results", e)
+                                Log.e("Fetch Places", "Problem getting access code", e)
                             }
                         }
-                        // do something wih the result
-                        // Return the list of {@link Colleges}s
                     }
                 })
             }
             try {
-                fetchPlaces.await()
-            }catch (e: Exception){
+                fetchToken.await()
+            } catch (e: Exception) {
                 Log.d("debugger: ", e.message!!)
             }
         }
-        return places
+        return token
     }
 
-    suspend fun getPlaces_(client: OkHttpClient):ArrayList<Places>{
-        // Create an empty ArrayList that we can start adding colleges to
+    suspend fun getPlaces_(client: OkHttpClient, query: String):ArrayList<Places>{
+        //get token
+        val token = getToken(client)
+
+        // Create an empty ArrayList that we can start adding places to
         val places: ArrayList<Places> = ArrayList()
         coroutineScope{
             val fetchPlaces = async(Dispatchers.IO + SupervisorJob()) {
                 val request: Request = Request.Builder()
-                    .header("Authorization", "Bearer pPvva4KL3w0uw4WSV9AkUcgkTXBQ")
-                    .url("https://test.api.amadeus.com/v1/reference-data/locations/pois?&latitude=41.397158&longitude=2.160873&radius=2")
+                    .header("Authorization", "Bearer "+token)
+                    .url(query)
                     .method("GET", null)
                     .build()
                 client.newCall(request).enqueue(object : Callback {
@@ -122,7 +81,6 @@ object FetchPlaces {
                         } else {
                             val text = response.body!!.string()
                             Log.i("Main Activity: ", text)
-                            //List<Datum> places = new ArrayList<>();
                             // If the JSON string is empty or null, then return early.
 
                             // Try to parse the JSON response string. If there's a problem with the way the JSON
@@ -130,23 +88,23 @@ object FetchPlaces {
                             // Catch the exception so the app doesn't crash, and print the error message to the logs.
                             try {
                                 val baseJsonResponse = JSONObject(text)
-                                // Extract the JSONArray associated with the key called "features",
-                                val collegeArray = baseJsonResponse.getJSONArray("data")
+                                // Extract the JSONArray associated with the key called "data",
+                                val placesArray = baseJsonResponse.getJSONArray("data")
 
-                                for (i in 0 until collegeArray.length()) {
+                                for (i in 0 until placesArray.length()) {
 
-                                    val currentCollege = collegeArray.getJSONObject(i)
-                                    val name = currentCollege.getString("name")
-                                    val geoCode = currentCollege.getJSONObject("geoCode")
+                                    val currentPlace = placesArray.getJSONObject(i)
+                                    val name = currentPlace.getString("name")
+                                    val geoCode = currentPlace.getJSONObject("geoCode")
                                     val latitude = geoCode.getDouble("latitude")
                                     val longitude = geoCode.getDouble("longitude")
-                                    val category = currentCollege.getString("category")
-                                    // Create a new {@link College} object with the city, latitude, longitude
-                                    val college = Places(latitude, longitude, name, category)
-                                    places.add(college)
+                                    val category = currentPlace.getString("category")
+                                    // Create a new {@link Places} object with the name, category, latitude, longitude
+                                    val place = Places(latitude, longitude, name, category)
+                                    places.add(place)
                                 }
                             } catch (e: JSONException) {
-                                Log.e("QueryUtils", "Problem parsing the college JSON results", e)
+                                Log.e("FetchPlaces", "Problem parsing JSON results", e)
                             }
                         }
                     }
