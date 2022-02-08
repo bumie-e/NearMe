@@ -6,7 +6,6 @@ import okhttp3.*
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
-import kotlin.math.log
 
 
 object FetchPlaces {
@@ -15,56 +14,46 @@ object FetchPlaces {
         var token = ""
         val formBody: RequestBody = FormBody.Builder()
             .add("grant_type", "client_credentials")
-            .add("&client_id", "your_API_Key")
-            .add("&client_secret", "your_API_Secret")
+            .add("client_id", "your_client_id")
+            .add("client_secret", "your_api_secret")
             .build()
+        withContext(Dispatchers.IO) {
+            val request: Request = Request.Builder()
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .url("https://test.api.amadeus.com/v1/security/oauth2/token")
+                .post(formBody)
+                .build()
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    e.printStackTrace()
+                }
 
-        coroutineScope {
-            val fetchToken = async(Dispatchers.IO + SupervisorJob()) {
-                val request: Request = Request.Builder()
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .url("https://test.api.amadeus.com/v1/security/oauth2/token")
-                    .post(formBody)
-                    .method("GET", null)
-                    .build()
-                client.newCall(request).enqueue(object : Callback {
-                    override fun onFailure(call: Call, e: IOException) {
-                        e.printStackTrace()
-                    }
+                @Throws(IOException::class)
+                override fun onResponse(call: Call, response: Response) {
+                    if (!response.isSuccessful) {
+                        throw IOException("Unexpected code $response")
+                    } else {
+                        val text = response.body!!.string()
+                        try {
+                            token = JSONObject(text).getString("access_token")
 
-                    @Throws(IOException::class)
-                    override fun onResponse(call: Call, response: Response) {
-                        if (!response.isSuccessful) {
-                            throw IOException("Unexpected code $response")
-                        } else {
-                            val text = response.body!!.string()
-                            try {
-                                token = JSONObject(text).getString("access_token")
-
-                            } catch (e: JSONException) {
-                                Log.e("Fetch Places", "Problem getting access code", e)
-                            }
+                        } catch (e: JSONException) {
+                            Log.e("Fetch Places", "Problem getting access code", e)
                         }
                     }
-                })
-            }
-            try {
-                fetchToken.await()
-            } catch (e: Exception) {
-                Log.d("debugger: ", e.message!!)
-            }
+                }
+            })
+            delay(2080L)
         }
         return token
     }
 
     suspend fun getPlaces_(client: OkHttpClient, query: String):ArrayList<Places>{
-        //get token
-        val token = getToken(client)
-
         // Create an empty ArrayList that we can start adding places to
         val places: ArrayList<Places> = ArrayList()
         coroutineScope{
-            val fetchPlaces = async(Dispatchers.IO + SupervisorJob()) {
+            val fetchPlaces = async(Dispatchers.IO + Job()) {
+                val token = getToken(client)
                 val request: Request = Request.Builder()
                     .header("Authorization", "Bearer "+token)
                     .url(query)
@@ -110,11 +99,8 @@ object FetchPlaces {
                     }
                 })
             }
-            try {
-                fetchPlaces.await()
-            }catch (e: Exception){
-                Log.d("debugger: ", e.message!!)
-            }
+            fetchPlaces.await()
+            delay(2080L)
         }
         return places
     }

@@ -1,36 +1,22 @@
 package com.bumie.nearme_
 
 import android.Manifest
-import android.R.id
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
-import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.Toolbar
-import androidx.core.content.ContextCompat.getSystemService
 import com.bumie.nearme_.databinding.ActivityPlacesBinding
 import okhttp3.OkHttpClient
-import android.R.id.text2
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationManager
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
 import kotlinx.coroutines.*
 import java.lang.StringBuilder
+import java.sql.Time
 import java.util.concurrent.TimeUnit
-import com.google.android.gms.common.data.DataHolder
 
 class PlacesActivity : AppCompatActivity() {
 
@@ -67,23 +53,25 @@ class PlacesActivity : AppCompatActivity() {
 
     }
     private suspend fun fetchPlaces(){
-        val client = OkHttpClient().newBuilder().build()
-        getCurrentLocation()
+        val client = OkHttpClient().newBuilder()
+            .readTimeout(120, TimeUnit.SECONDS)
+            .build()
+       // getCurrentLocation()
         val query = StringBuilder(spatialUrl)
         query.append("latitude=")
-        query.append(latitude)
+        query.append(41.397158)
         query.append("&longitude=")
-        query.append(longitude)
+        query.append(2.160873)
         query.append("&radius=2")
-        val places = FetchPlaces.getPlaces_(client, query.toString())
-
+        var places = FetchPlaces.getPlaces_(client, query.toString())
         updateMap(places)
+
     }
 
 
     private suspend fun updateMap(places:ArrayList<Places>) {
 
-        val viewPlacesAdapter = ViewPlacesAdapter(this, places!!)
+        val viewPlacesAdapter = ViewPlacesAdapter(this, places)
         coroutineScope {
             val fetchPlaces = async(Dispatchers.Main + SupervisorJob()) {
                 binding.recyclerView.adapter = viewPlacesAdapter
@@ -120,16 +108,22 @@ class PlacesActivity : AppCompatActivity() {
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQ_CODE);
             return
         }
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location ->
-                // getting the last known or current location
-                latitude = location.latitude
-                longitude = location.longitude
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Failed on getting current location",
-                    Toast.LENGTH_SHORT).show()
-            }
+        try{
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location ->
+                    // getting the last known or current location
+                    latitude = location.latitude
+                    longitude = location.longitude
+                }
+                .addOnFailureListener {
+                    Toast.makeText(this, "Failed on getting current location",
+                        Toast.LENGTH_SHORT).show()
+                }
+        }catch (e: Exception){
+            Toast.makeText(this, "Please turn on your location",
+                Toast.LENGTH_SHORT).show()
+        }
+
     }
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray

@@ -70,7 +70,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         val center = mMap.cameraPosition.target
         val latitude = center.latitude
         val longitude = center.longitude
-        val currentLocation = LatLng(latitude, longitude)
+        val currentLocation = LatLng(41.397158, 2.160873)
 
         mMap.addMarker(MarkerOptions().draggable(true).position(currentLocation).title("Marker in Current Location"))
         mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLocation))
@@ -107,7 +107,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
             //Place Marker on a Place
             CoroutineScope(Dispatchers.Main)
             mMap.addMarker(MarkerOptions().draggable(true)
-                .position(LatLng(longitude!!, latitude!!))
+                .position(LatLng(41.397158, 2.160873))
                 .title(title).snippet(city))
         }
     }
